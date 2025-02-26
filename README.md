@@ -149,6 +149,52 @@ Connect each endstop to its designated pin on your control board:
 - Wire each endstop to an available pin on your MCU
 - Configure each pin with pull-up resistors and appropriate debounce
 
+
+## Single Z Motor Configuration
+
+For printers with a single Z motor controlling a floating bed (like many Cartesian or Bed Slinger printers), the multi-Z stepper homing functionality may not be needed. In these cases:
+
+1. **Comment Out Z-Homing**: For single Z motor printers, you can bypass the Z calibration sequence by modifying the `_PLR_RESUME_PRINT_START` macro in your configuration:
+
+```ini
+[gcode_macro _PLR_RESUME_PRINT_START]
+gcode:
+    {% set resume_info = printer.save_variables.variables.resume_meta_info %}
+    _PLR_RESUME_READY      
+    # PLR_Z_HOME MODE=RESUME    # Comment out this line for single Z motor printers
+    PLR_ENABLE
+    G90             ; absolute positioning
+    M107            ; turn fan off
+    G92 E0                         ; zero the extruder
+    G1 E5.0 F1800                  ; extrude filament
+    G1 X{resume_info.position.x} Y{resume_info.position.y} Z{resume_info.position.z} F3000
+    G92 E0
+    G90
+    G21
+    M83 ; use relative distances for extrusion
+    RESTORE_FAN_SPEEDS
+```
+
+2. **Standard Homing**: With single Z motor printers, you can use the standard G28 Z for Z-axis homing instead of the PLR's multi-Z calibration system.
+
+3. **Configuration**: You can still use the Power Loss Recovery plugin's state saving and recovery features, just with a simplified Z homing approach:
+
+```ini
+[power_loss_recovery]
+debug_mode: False
+save_interval: 30
+save_on_layer: True
+history_size: 3
+save_delay: 2
+
+# For single Z motor printers, you can omit or comment out the pin_stepper_z1, pin_stepper_z2, etc.
+pin_stepper_z: ^z_endstop_pin
+
+# The rest of your PLR configuration
+```
+
+This simplified configuration provides the benefits of print recovery without the complexity of multi-Z stepper calibration for printers that don't require it.
+
 ## Initial Setup and Calibration
 
 Before using the Power Loss Recovery system for the first time, a proper initial calibration is essential. This establishes the baseline reference that the printer will use when resuming prints.
