@@ -20,7 +20,7 @@ The plugin's Z+ homing capabilities provide accurate Z-axis calibration after un
    ```
    - Download the plugin file:
    ```bash
-   wget https://raw.githubusercontent.com/username/repository/main/power_loss_recovery.py
+   wget https://raw.githubusercontent.com/ankurv2k6/klipper-plr/main/power_loss_recovery.py
    ```
    - Ensure proper permissions:
    ```bash
