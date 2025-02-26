@@ -8,6 +8,11 @@ The Klipper Power Loss Recovery (PLR) plugin offers automated state saving and r
 
 The plugin's Z+ homing capabilities provide accurate Z-axis calibration after unexpected stoppages, particularly beneficial for printers with multiple Z steppers.
 
+
+## Demo Video
+
+https://youtu.be/3jmUaCYAoxU
+
 ## Installation
 
 ### Adding the Plugin to an Existing Klipper Installation
