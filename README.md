@@ -579,6 +579,7 @@ For optimal operation, modify your slicer's start and end G-code to include the 
    - Add the PLR placeholders after your START_PRINT macro call:
    ```
    ;;;;; PLR_RESUME - INITIAL PRINTER SETUP STARTS ;;;;;
+   PLR_DISABLE
    print_start EXTRUDER=[first_layer_temperature[initial_extruder]] BED=[first_layer_bed_temperature]
    PLR_ENABLE
    ;;;;; PLR_RESUME - PRINT GCODE STARTS ;;;;;
