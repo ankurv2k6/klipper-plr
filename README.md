@@ -8,50 +8,198 @@ The Klipper Power Loss Recovery (PLR) plugin offers automated state saving and r
 
 The plugin's Z+ homing capabilities provide accurate Z-axis calibration after unexpected stoppages, particularly beneficial for printers with multiple Z steppers.
 
+## Installation
+
+### Adding the Plugin to an Existing Klipper Installation
+
+1. **Download the Plugin**
+   - Connect to your Klipper host via SSH
+   - Navigate to the Klipper extras directory:
+   ```bash
+   cd ~/klipper/klippy/extras
+   ```
+   - Download the plugin file:
+   ```bash
+   wget https://raw.githubusercontent.com/username/repository/main/power_loss_recovery.py
+   ```
+   - Ensure proper permissions:
+   ```bash
+   chmod 644 power_loss_recovery.py
+   ```
+
+2. **Restart Klipper**
+   - After installing the plugin, restart Klipper to load it:
+   ```bash
+   sudo service klipper restart
+   ```
+
+### Creating a Separate Configuration File
+
+Instead of adding all configuration directly to your main `printer.cfg`, you can create a separate file for the Power Loss Recovery settings:
+
+1. **Create the Configuration File**
+   ```bash
+   cd ~/printer_data/config
+   nano power_loss_recovery.cfg
+   ```
+
+2. **Add Configuration to the File**
+   ```ini
+   # Power Loss Recovery Configuration
+   [save_variables]
+   filename: ~/printer_data/config/variables.cfg
+
+   [power_loss_recovery]
+   debug_mode: False
+   save_interval: 30
+   save_on_layer: True
+   history_size: 3
+   save_delay: 2
+   
+   # Z-PLUS HOMING OPTIONS #
+   pin_stepper_z: ^PG10
+   pin_stepper_z1: ^PG11
+   pin_stepper_z2: ^PG12
+   pin_stepper_z3: ^PG13
+   
+   # Add the rest of your PLR configuration here
+   ```
+
+3. **Include the File in Your Main Configuration**
+   - Add the following line to your `printer.cfg`:
+   ```ini
+   [include power_loss_recovery.cfg]
+   ```
+
+4. **Add Macros to a Separate File (Optional)**
+   - For better organization, you can also keep your PLR macros in a separate file:
+   ```bash
+   nano power_loss_recovery_macros.cfg
+   ```
+   - Add the PLR macros to this file
+   - Include it in your printer.cfg:
+   ```ini
+   [include power_loss_recovery_macros.cfg]
+   ```
+
+5. **Restart Klipper**
+   - After creating and including the config files, restart Klipper:
+   ```bash
+   sudo service klipper restart
+   ```
+
 ## Hardware Requirements
 
 ### Z-Axis Endstops Configuration
 
-To implement the Z+ homing functionality for printers with multiple Z steppers, you'll need:
+To implement the Z+ homing functionality for printers with multiple Z steppers, you'll need to install endstops appropriate to your printer design:
 
-1. **Individual Z Endstops**
-   - One endstop switch or sensor for each Z stepper motor (up to four supported)
-   - Proper mounting brackets for each Z motor or lead screw
-   - Correctly shielded wiring to minimize electrical noise
+#### For Floating Gantry Printers (e.g., Voron 2.4)
 
-### Z-Endstop Installation
+1. **Endstop Placement**
+   - Install microswitches on the corners of the gantry facing upward
+   - Install corresponding bumpers on the top of the Z rails/frame
+   - The gantry moves up, and the microswitches trigger against the bumpers on the fixed frame
 
-1. **Mounting Locations**
-   - Install endstops at the top travel position of each Z stepper
-   - For printers with multiple Z steppers, place them at each Z motor location
-   - Ensure all endstops are mounted at precisely the same relative height
+2. **Installation Details**
+   - Mount microswitches at each corner of the gantry assembly facing upward
+   - Install matching bumpers on the top of the Z rails or top frame at positions that align with each switch
+   - Use adjustable mounting solutions to fine-tune the trigger point for each endstop
+   - Allow approximately 5-10mm clearance from the physical hard stop
 
-2. **Wiring Configuration**
-   - Connect each endstop to its designated pin on your control board:
-     - First Z endstop connects to `pin_stepper_z`
-     - Second Z endstop connects to `pin_stepper_z1`
-     - Third Z endstop connects to `pin_stepper_z2`
-     - Fourth Z endstop connects to `pin_stepper_z3`
+3. **Wiring Considerations**
+   - Route wires along the gantry to the moving toolhead cable chain
+   - Use shielded cables to reduce electrical noise
+   - Secure cables with zip ties or cable management solutions
+   - Ensure adequate slack for full Z-axis movement
 
-3. **MCU Configuration**
-   - Wire each endstop to an available pin on your MCU
-   - Configure each pin with pull-up resistors and appropriate debounce
+#### For Floating Bed Printers (e.g., Voron Trident, VzBot)
 
-### Hardware Testing
+1. **Endstop Placement**
+   - Install endstop switches on the fixed Z columns/rails
+   - Install corresponding bumpers on the bed carriage at each Z motor position
+   - The bed moves down to trigger the endstops that are mounted on fixed points
 
-1. **Individual Z Motor Testing**
-   - Test each Z motor independently to ensure they move freely
-   - Verify proper mechanical movement for each Z stepper
+2. **Installation Details**
+   - Mount microswitches on the Z columns/rails (typically near the top)
+   - Attach bumpers to the bed carriage or frame at positions that align with each endstop
+   - Ensure proper alignment for consistent triggering
+   - Install with adjustable mounting to allow for fine-tuning
 
-2. **Z-Endstop Calibration**
-   - Run `PLR_Z_HOME MODE=CALIBRATE`
-   - Verify all Z steppers home properly
-   - Check recorded Z offsets for consistency
+3. **Wiring Considerations**
+   - Keep wires organized and routed along the fixed frame
+   - Ensure wire paths don't interfere with bed or gantry movement
+   - Use proper strain relief to prevent cable damage
 
-3. **Gantry Alignment Check**
-   - After homing, use a digital caliper or dial indicator to check gantry level
-   - Measure the distance at each Z stepper location
-   - Adjust `stepper_z_adjust_offset` values as needed
+### Wiring Configuration
+
+Connect each endstop to its designated pin on your control board:
+- First Z endstop connects to `pin_stepper_z`
+- Second Z endstop connects to `pin_stepper_z1`
+- Third Z endstop connects to `pin_stepper_z2`
+- Fourth Z endstop connects to `pin_stepper_z3`
+
+### MCU Configuration
+
+- Wire each endstop to an available pin on your MCU
+- Configure each pin with pull-up resistors and appropriate debounce
+
+## Initial Setup and Calibration
+
+Before using the Power Loss Recovery system for the first time, a proper initial calibration is essential. This establishes the baseline reference that the printer will use when resuming prints.
+
+### Initial Calibration Procedure
+
+1. **Prepare the Printer**
+   - Ensure all mechanical components are properly tightened and adjusted
+   - Clean all endstop surfaces and Z rails
+   - Verify that the bed is properly leveled (if applicable)
+
+2. **Baseline Gantry/Bed Leveling**
+   - For floating gantry printers (Voron 2.4):
+     - Run a Quad Gantry Level (QGL) procedure: `QUAD_GANTRY_LEVEL`
+     - Verify the gantry is square and level to the bed
+
+   - For floating bed printers (Voron Trident, VzBot):
+     - Run a Z Tilt Adjust procedure: `Z_TILT_ADJUST`
+     - Ensure all Z motors are properly synchronized
+
+3. **PLR Z Calibration**
+   - After your standard leveling procedure completes, run the PLR Z homing calibration:
+     ```
+     PLR_Z_HOME MODE=CALIBRATE
+     ```
+   - This command will:
+     - Home each Z stepper individually against its endstop
+     - Measure and store the offsets between Z steppers
+     - Calculate a reference position for future recovery operations
+     - Save these values to the variables file for persistent storage
+
+4. **Verification**
+   - After calibration, check the saved offsets:
+     ```
+     PLR_QUERY_SAVED_STATE
+     ```
+   - The command should show offset values for each Z stepper
+   - These values represent the height differences between Z steppers
+
+5. **Test Prints**
+   - Run a small test print (20-30 minutes)
+   - Cancel the print intentionally
+   - Use `PLR_RESUME_PRINT` to test the recovery process
+   - Check that the first layer after resuming matches the previous layer perfectly
+
+### Calibration Schedule
+
+- Perform a full calibration whenever:
+  - You make mechanical changes to the printer
+  - You adjust endstop positions
+  - Z stepper motors or drivers are replaced
+  - After firmware updates that affect motion systems
+
+- For regular maintenance:
+  - Recalibrate monthly for high-use printers
+  - Recalibrate quarterly for occasional-use printers
 
 ## Core Features
 
@@ -99,7 +247,7 @@ To implement the Z+ homing functionality for printers with multiple Z steppers, 
 
 ### Basic Setup
 
-Add the following to your `printer.cfg`:
+Add the following to your `printer.cfg` or to a separate configuration file as described in the installation section:
 
 ```ini
 [save_variables]
