@@ -1,3 +1,9 @@
+# Support for power loss recovery on klipper based 3d printers
+#
+# Copyright (C) 2025  Ankur Verma <ankurver@gmail.com>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
+
 import logging
 import json
 import os
