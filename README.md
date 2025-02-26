@@ -458,22 +458,6 @@ gcode:
 
 ## Integration with Existing Macros
 
-### With Standard Homing
-
-For printers with multiple Z steppers, integrate with your existing homing routine:
-
-```ini
-# Example for printer with multiple Z steppers
-[gcode_macro HOME_ALL]
-gcode:
-    G28                # Home all axes
-    # Add this for printers that need additional Z leveling
-    PLR_Z_HOME MODE=CALIBRATE  # Calibrate Z offsets
-    
-# Add this to your before_calibrate_gcode option in [power_loss_recovery]
-before_calibrate_gcode: G28
-```
-
 ### With START_PRINT Macro
 
 Integrate with your standard START_PRINT macro:
